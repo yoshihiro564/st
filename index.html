@@ -83,7 +83,7 @@ textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:
 <body>
 <header>
   <h1>文字アニメ<b>スタンプ</b>工房</h1>
-  <div class="spec">LINEアニメーションスタンプ規格：APNG／最大320×270px／5〜20フレーム／再生最大4秒／ループ1〜4回／1個300KB以下</div>
+  <div class="spec">LINEアニメーションスタンプ規格：APNG(RGB)／最大320×270px／5〜20フレーム／再生最大4秒／ループ1〜4回／1個1MB以下／main 240×240・tab 96×74</div>
   <div class="grow"></div>
   <button class="btn dark sm" id="btnRandAll">🎲 全部おまかせ</button>
   <button class="btn pri" id="btnExport">⬇ APNGをZIPで書き出し</button>
@@ -195,7 +195,7 @@ const DEF={
  cam:'none',camAmp:1,
  decos:['sparkle'],decoAmt:1,decoColor:'#ffcc00',decoMulti:false,lineColor:'#222222'
 };
-const OUT={W:320,H:270,sec:2,frames:20,plays:2,mode:'pal'};
+const OUT={W:320,H:270,sec:2,frames:20,plays:2,firstFull:true,mainIdx:0,tabIdx:0};
 const clone=o=>JSON.parse(JSON.stringify(o));
 
 const PRESETS=[
@@ -530,18 +530,14 @@ function filterRows(px,stride,x0,y0,w,h){ // 行ごとに最適フィルタ
     out[y*(bpr+1)]=best;out.set(bestBuf,y*(bpr+1)+1);prev.set(cur)}
   return out;
 }
-function quantize(px,q){for(let i=0;i<px.length;i+=4){const a=px[i+3];if(a<10){px[i]=px[i+1]=px[i+2]=px[i+3]=0;continue}if(q>1){px[i]=Math.min(255,Math.round(px[i]/q)*q);px[i+1]=Math.min(255,Math.round(px[i+1]/q)*q);px[i+2]=Math.min(255,Math.round(px[i+2]/q)*q);px[i+3]=a>245?255:Math.min(255,Math.round(a/q)*q)}}}
+function quantize(px,q){for(let i=0;i<px.length;i+=4){const a=px[i+3];if(a===0||(q>1&&a<6)){px[i]=px[i+1]=px[i+2]=px[i+3]=0;continue}if(q>1){px[i]=Math.min(255,Math.round(px[i]/q)*q);px[i+1]=Math.min(255,Math.round(px[i+1]/q)*q);px[i+2]=Math.min(255,Math.round(px[i+2]/q)*q);px[i+3]=a>245?255:Math.min(255,Math.round(a/q)*q)}}}
 async function encodeAPNG(frames,W,H,sec,plays){
   const parts=[new Uint8Array([137,80,78,71,13,10,26,10])];
   const ih=new Uint8Array(13),dv=new DataView(ih.buffer);dv.setUint32(0,W);dv.setUint32(4,H);ih[8]=8;ih[9]=6;parts.push(chunk('IHDR',ih));
   const ac=new Uint8Array(8),av=new DataView(ac.buffer);av.setUint32(0,frames.length);av.setUint32(4,plays);parts.push(chunk('acTL',ac));
   let seq=0;
   for(let fi=0;fi<frames.length;fi++){
-    const px=frames[fi];let x0=0,y0=0,x1=W-1,y1=H-1;
-    if(fi>0){const a=new Uint32Array(px.buffer),b=new Uint32Array(frames[fi-1].buffer);x0=W;y0=H;x1=-1;y1=-1;
-      for(let y=0;y<H;y++){const r=y*W;for(let x=0;x<W;x++)if(a[r+x]!==b[r+x]){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}}
-      if(x1<0){x0=y0=x1=y1=0}}
-    const w=x1-x0+1,h=y1-y0+1;
+    const px=frames[fi],x0=0,y0=0,w=W,h=H; // LINE規格：全フレーム同サイズ（差分切り出しはしない）
     const fc=new Uint8Array(26),fv=new DataView(fc.buffer);fv.setUint32(0,seq++);fv.setUint32(4,w);fv.setUint32(8,h);fv.setUint32(12,x0);fv.setUint32(16,y0);fv.setUint16(20,sec);fv.setUint16(22,frames.length);fc[24]=0;fc[25]=0;
     parts.push(chunk('fcTL',fc));
     const z=await deflate(filterRows(px,W,x0,y0,w,h));
@@ -551,83 +547,45 @@ async function encodeAPNG(frames,W,H,sec,plays){
   parts.push(chunk('IEND',new Uint8Array(0)));
   return new Blob(parts,{type:'image/png'});
 }
-// ---- 256色パレット化（メディアンカット）
-function buildPalette(frames){
-  const hist=new Map();
-  for(const px of frames){const u=new Uint32Array(px.buffer);for(let i=0;i<u.length;i++){const v=u[i];if((v>>>24)===0)continue;hist.set(v,(hist.get(v)||0)+1)}}
-  const cols=[];hist.forEach((n,v)=>cols.push([v&255,v>>>8&255,v>>>16&255,v>>>24,n]));
-  const MAXC=255;let boxes=[cols];
-  const rng=bx=>{const mn=[255,255,255,255],mx=[0,0,0,0];for(const c of bx)for(let k=0;k<4;k++){if(c[k]<mn[k])mn[k]=c[k];if(c[k]>mx[k])mx[k]=c[k]}return mx.map((v,k)=>(v-mn[k])*(k===3?1.6:1))};
-  while(boxes.length<MAXC){
-    let bi=-1,bs=0,bk=0;
-    for(let i=0;i<boxes.length;i++){const bx=boxes[i];if(bx.length<2)continue;const r=rng(bx);let k=0;for(let j=1;j<4;j++)if(r[j]>r[k])k=j;let cnt=0;for(const c of bx)cnt+=c[4];const sc=r[k]*Math.sqrt(cnt);if(sc>bs){bs=sc;bi=i;bk=k}}
-    if(bi<0||bs===0)break;
-    const bx=boxes[bi].sort((x,y)=>x[bk]-y[bk]);let tot=0;for(const c of bx)tot+=c[4];let acc=0,m=0;for(;m<bx.length-1;m++){acc+=bx[m][4];if(acc>=tot/2)break}
-    boxes.splice(bi,1,bx.slice(0,m+1),bx.slice(m+1));
-  }
-  let P=[];
-  for(const bx of boxes){if(!bx.length)continue;let r=0,g=0,b2=0,al=0,n=0;for(const c of bx){r+=c[0]*c[4];g+=c[1]*c[4];b2+=c[2]*c[4];al+=c[3]*c[4];n+=c[4]}P.push([r/n,g/n,b2/n,al/n])}
-  // k-means で微調整（色ずれ防止）
-  const dist=(c,q)=>{const dr=c[0]-q[0],dg=c[1]-q[1],db=c[2]-q[2],da=(c[3]-q[3])*1.6;return dr*dr*.3+dg*dg*.59+db*db*.11+da*da};
-  let sample=cols;if(cols.length>40000){sample=cols.slice().sort((a,b)=>b[4]-a[4]).slice(0,40000)}
-  for(let it=0;it<4;it++){const acc=P.map(()=>[0,0,0,0,0]);
-    for(const c of sample){let bd=1e18,bk=0;for(let j=0;j<P.length;j++){const d=dist(c,P[j]);if(d<bd){bd=d;bk=j}}const A=acc[bk];A[0]+=c[0]*c[4];A[1]+=c[1]*c[4];A[2]+=c[2]*c[4];A[3]+=c[3]*c[4];A[4]+=c[4]}
-    P=P.map((q,j)=>acc[j][4]?[acc[j][0]/acc[j][4],acc[j][1]/acc[j][4],acc[j][2]/acc[j][4],acc[j][3]/acc[j][4]]:q)}
-  // 出現数の多い色（白フチ・塗り）は正確に保持
-  const top=cols.slice().sort((a,b)=>b[4]-a[4]).slice(0,24);
-  for(const c of top){let bd=1e18,bk=0;for(let j=0;j<P.length;j++){const d=dist(c,P[j]);if(d<bd){bd=d;bk=j}}if(bd<1200)P[bk]=[c[0],c[1],c[2],c[3]]}
-  return [[0,0,0,0],...P.map(q=>q.map(Math.round))];
+// ---- フレーム列（1フレーム目を完成形にする並び替え）
+function seqIndex(k,F){ // 書き出しk枚目 → [描画フレーム, 描画上の総フレーム]
+  if(OUT.firstFull&&F>=6){const Fr=F-1;return k===0?[Fr-1,Fr]:[k-1,Fr]}
+  return [k,F];
 }
-function mapToPalette(frames,pal){
-  const cache=new Map(),out=[];
-  for(const px of frames){const u=new Uint32Array(px.buffer),idx=new Uint8Array(u.length);
-    for(let i=0;i<u.length;i++){const v=u[i];if((v>>>24)===0){idx[i]=0;continue}let k=cache.get(v);
-      if(k===undefined){const r=v&255,g=v>>>8&255,b=v>>>16&255,a=v>>>24;let bd=1e18;k=1;
-        for(let j=1;j<pal.length;j++){const q=pal[j];const dr=r-q[0],dg=g-q[1],db=b-q[2],da=(a-q[3])*1.6;const d=dr*dr*.3+dg*dg*.59+db*db*.11+da*da;if(d<bd){bd=d;k=j}}
-        if(a<40&&pal[k][3]>a+60)k=0;cache.set(v,k)}
-      idx[i]=k}
-    out.push(idx)}
-  return out;
+function renderSeq(i,F,q,tw,th){ // tw,th: 出力サイズ（メイン画像用の縮小）
+  const st=state.stamps[i],s=curSettings(i),W=OUT.W,H=OUT.H;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const ctx=cv.getContext('2d');
+  const ow=tw||W,oh=th||H,oc=document.createElement('canvas');oc.width=ow;oc.height=oh;const octx=oc.getContext('2d',{willReadFrequently:true});
+  const sc=Math.min(ow/W,oh/H),dw=W*sc,dh=H*sc;octx.imageSmoothingQuality='high';
+  const frames=[];
+  for(let k=0;k<F;k++){const [f,Fn]=seqIndex(k,F);renderFrame(ctx,st.text,s,f,Fn,st.seed);
+    octx.clearRect(0,0,ow,oh);octx.drawImage(cv,(ow-dw)/2,(oh-dh)/2,dw,dh);
+    const d=octx.getImageData(0,0,ow,oh).data;quantize(d,q);frames.push(new Uint8Array(d.buffer.slice(0)))}
+  return frames;
 }
-async function encodeAPNGPal(frames,W,H,sec,plays){
-  const pal=buildPalette(frames),idxs=mapToPalette(frames,pal);
-  const parts=[new Uint8Array([137,80,78,71,13,10,26,10])];
-  const ih=new Uint8Array(13),dv=new DataView(ih.buffer);dv.setUint32(0,W);dv.setUint32(4,H);ih[8]=8;ih[9]=3;parts.push(chunk('IHDR',ih));
-  const pl=new Uint8Array(pal.length*3),tr=new Uint8Array(pal.length);pal.forEach((c,i)=>{pl[i*3]=c[0];pl[i*3+1]=c[1];pl[i*3+2]=c[2];tr[i]=c[3]});
-  parts.push(chunk('PLTE',pl));parts.push(chunk('tRNS',tr));
-  const ac=new Uint8Array(8),av=new DataView(ac.buffer);av.setUint32(0,idxs.length);av.setUint32(4,plays);parts.push(chunk('acTL',ac));
-  let seq=0;
-  for(let fi=0;fi<idxs.length;fi++){
-    const px=idxs[fi];let x0=0,y0=0,x1=W-1,y1=H-1;
-    if(fi>0){const pv=idxs[fi-1];x0=W;y0=H;x1=-1;y1=-1;
-      for(let y=0;y<H;y++){const r=y*W;for(let x=0;x<W;x++)if(px[r+x]!==pv[r+x]){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}}
-      if(x1<0){x0=y0=x1=y1=0}}
-    const w=x1-x0+1,h=y1-y0+1,raw=new Uint8Array(h*(w+1));
-    for(let y=0;y<h;y++){raw[y*(w+1)]=0;raw.set(px.subarray((y0+y)*W+x0,(y0+y)*W+x0+w),y*(w+1)+1)}
-    const fc=new Uint8Array(26),fv=new DataView(fc.buffer);fv.setUint32(0,seq++);fv.setUint32(4,w);fv.setUint32(8,h);fv.setUint32(12,x0);fv.setUint32(16,y0);fv.setUint16(20,sec);fv.setUint16(22,idxs.length);
-    parts.push(chunk('fcTL',fc));
-    const z=await deflate(raw);
-    if(fi===0)parts.push(chunk('IDAT',z));else{const fd=new Uint8Array(4+z.length);new DataView(fd.buffer).setUint32(0,seq++);fd.set(z,4);parts.push(chunk('fdAT',fd))}
-  }
-  parts.push(chunk('IEND',new Uint8Array(0)));
-  return new Blob(parts,{type:'image/png'});
-}
-async function buildStamp(i,onStep){
+const LIMIT=1024*1024;
+async function buildStamp(i,tw,th){
   const st=state.stamps[i],s=curSettings(i);
   await ensureFonts([[s.font,st.text.replace(/[\[\]\n]/g,'')]]);
-  const W=OUT.W,H=OUT.H,cv=document.createElement('canvas');cv.width=W;cv.height=H;const ctx=cv.getContext('2d',{willReadFrequently:true});
-  const LIMIT=300*1024,F0=OUT.frames;
-  const tries=OUT.mode==='rgba'
-    ?[[F0,'rgba',1],[F0,'rgba',8],[F0,'pal'],[Math.min(F0,15),'pal'],[Math.min(F0,12),'pal'],[Math.min(F0,10),'pal'],[5,'pal']]
-    :[[F0,'pal'],[Math.min(F0,16),'pal'],[Math.min(F0,12),'pal'],[Math.min(F0,10),'pal'],[Math.min(F0,8),'pal'],[5,'pal']];
-  let blob,used;
-  for(const [F,mode,q] of tries){
-    const frames=[];for(let f=0;f<F;f++){renderFrame(ctx,st.text,s,f,F,st.seed);const d=ctx.getImageData(0,0,W,H).data;quantize(d,mode==='rgba'?q:1);frames.push(new Uint8Array(d.buffer.slice(0)))}
-    blob=mode==='rgba'?await encodeAPNG(frames,W,H,OUT.sec,OUT.plays):await encodeAPNGPal(frames,W,H,OUT.sec,OUT.plays);
-    used={F,mode,q:q||1};if(onStep)onStep();
+  const F0=OUT.frames;
+  const tries=[[F0,1],[F0,2],[F0,4],[Math.min(F0,16),4],[Math.min(F0,12),6],[Math.min(F0,10),8],[Math.max(5,Math.min(F0,8)),8]];
+  let blob,used,same=false;
+  for(const [F,q] of tries){
+    const frames=renderSeq(i,F,q,tw,th);
+    same=frames.every(fr=>{const a=new Uint32Array(fr.buffer),b=new Uint32Array(frames[0].buffer);for(let j=0;j<a.length;j++)if(a[j]!==b[j])return false;return true});
+    blob=await encodeAPNG(frames,tw||OUT.W,th||OUT.H,OUT.sec,OUT.plays);used={F,q};
     if(blob.size<=LIMIT)break;
   }
-  return {blob,used};
+  return {blob,used,same};
+}
+async function buildTab(i){ // 96×74 静止PNG（完成形のフレーム）
+  const st=state.stamps[i],s=curSettings(i),W=OUT.W,H=OUT.H;
+  await ensureFonts([[s.font,st.text.replace(/[\[\]\n]/g,'')]]);
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const ctx=cv.getContext('2d');
+  const F=OUT.frames;renderFrame(ctx,st.text,{...s,decos:[],cam:'none'},F-1,F,st.seed);
+  const oc=document.createElement('canvas');oc.width=96;oc.height=74;const o=oc.getContext('2d');o.imageSmoothingQuality='high';
+  const sc=Math.min(96/W,74/H);o.drawImage(cv,(96-W*sc)/2,(74-H*sc)/2,W*sc,H*sc);
+  return await new Promise(r=>oc.toBlob(r,'image/png'));
 }
 
 /* =========================================================
@@ -660,7 +618,7 @@ function render_ctls(){
   const rangeEl=(obj,k,label,min,max,step,fmt=v=>v,isOut)=>{const d=add(`<div class="ctl"><label>${label}<span>${fmt(obj[k])}</span></label><input type="range" min="${min}" max="${max}" step="${step}" value="${obj[k]}"></div>`);
     const inp=d.querySelector('input'),sp=d.querySelector('span');inp.oninput=()=>{obj[k]=+inp.value;sp.textContent=fmt(obj[k]);changed(isOut)}};
   const segEl=(obj,k,label,opts,isOut)=>{const d=add(`<div class="ctl"><label>${label}</label><div class="seg">${opts.map(o=>`<button data-v="${o[0]}" class="${String(obj[k])===String(o[0])?'on':''}">${o[1]}</button>`).join('')}</div></div>`);
-    d.querySelectorAll('button').forEach(b=>b.onclick=()=>{const v=b.dataset.v;obj[k]=typeof obj[k]==='number'?+v:v;d.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));changed(isOut);if(isOut)render_ctls()})};
+    d.querySelectorAll('button').forEach(b=>b.onclick=()=>{const v=b.dataset.v;obj[k]=typeof obj[k]==='number'?+v:typeof obj[k]==='boolean'?v==='true':v;d.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));changed(isOut);if(isOut)render_ctls()})};
   const chipsEl=(k,label,opts,multi)=>{const d=add(`<div class="ctl"><label>${label}${multi?'<span>複数選択で重ね掛け</span>':''}</label><div class="chips ${multi?'multi':''}">${opts.map(o=>`<button data-v="${o[0]}" class="${(multi?s[k].includes(o[0]):s[k]===o[0])?'on':''}">${o[1]}</button>`).join('')}</div></div>`);
     d.querySelectorAll('button').forEach(b=>b.onclick=()=>{const v=b.dataset.v;if(multi){const i=s[k].indexOf(v);i>=0?s[k].splice(i,1):s[k].push(v);b.classList.toggle('on')}else{s[k]=v;d.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b))}changed()})};
   const colorEl=(pairs)=>{const d=add(`<div class="colors">${pairs.map(p=>`<div class="col"><input type="color" data-k="${p[0]}" value="${s[p[0]]}">${p[1]}</div>`).join('')}</div>`);
@@ -692,7 +650,7 @@ function render_ctls(){
     rangeEl(s,'entPortion','登場にかける時間（1ループ中の割合）',.15,1,.05,v=>Math.round(v*100)+'%');
     rangeEl(s,'entStagger','1文字ずつの時間差',0,1,.05,v=>Math.round(v*100)+'%');
     segEl(s,'entOrder','登場順',[['fwd','前から'],['rev','後ろから'],['center','中央から'],['rand','ランダム'],['all','一斉']]);
-    add(`<div class="hint">LINEでは再生が終わると最後のフレームで止まるため、登場アニメは最後に必ず完成形になるよう作っています。</div>`);
+    add(`<div class="hint">LINEでは再生後に最後のフレームで止まり、ストアでは1フレーム目が静止画として表示されます。登場アニメは最後のフレームが必ず完成形になり、1フレーム目も（書き出し設定で）完成形にしています。</div>`);
   }else if(T==='loop'){
     chipsEl('loops','ループ（常時動く効果）',LOOP,true);
     segEl(s,'loopCycles','1ループ中の繰り返し回数',[[1,'1回'],[2,'2回'],[3,'3回'],[4,'4回']]);
@@ -723,15 +681,20 @@ function render_ctls(){
     segEl(OUT,'sec','1ループの秒数',[[1,'1秒'],[2,'2秒'],[3,'3秒'],[4,'4秒']],true);
     segEl(OUT,'plays','ループ回数',[[1,'1回'],[2,'2回'],[3,'3回'],[4,'4回']],true);
     rangeEl(OUT,'frames','フレーム数',5,20,1,v=>v+'枚（'+(v/OUT.sec).toFixed(1)+'fps）',true);
-    segEl(OUT,'mode','画質モード',[['pal','256色(軽い・推奨)'],['rgba','フルカラー優先']],true);
+    segEl(OUT,'firstFull','1フレーム目（ストアで静止画として表示）',[['true','完成形にする(推奨)'],['false','そのまま']],true);
+    const opts=state.stamps.map((st,i)=>`<option value="${i}">${String(i+1).padStart(2,'0')}：${st.text.replace(/\n/g,' ').replace(/[\[\]]/g,'').slice(0,14)}</option>`).join('');
+    const ms=add(`<div class="ctl"><label>メイン画像(240×240 APNG)に使うスタンプ</label><select id="mainSel">${opts}</select></div><div class="ctl"><label>タブ画像(96×74 PNG)に使うスタンプ</label><select id="tabSel">${opts}</select></div>`);
+    const m1=ms.querySelector('#mainSel'),m2=ms.querySelector('#tabSel');m1.value=Math.min(OUT.mainIdx,state.stamps.length-1);m2.value=Math.min(OUT.tabIdx,state.stamps.length-1);
+    m1.onchange=()=>OUT.mainIdx=+m1.value;m2.onchange=()=>OUT.tabIdx=+m2.value;
     const tot=OUT.sec*OUT.plays;
     add(`<div class="check" style="margin-top:8px">
       <div>総再生時間：${OUT.sec}秒×${OUT.plays}回＝<b>${tot}秒</b> ${tot<=4?'<span class="ok">✓ OK</span>':'<span class="ng">✕ 4秒以内にしてください</span>'}</div>
       <div>フレーム数：${OUT.frames} <span class="ok">✓ 5〜20</span></div>
       <div>サイズ：${OUT.W}×${OUT.H} <span class="ok">✓ 最大320×270・片辺270以上</span></div>
       <div>個数：${state.stamps.length}個 ${[8,16,24].includes(state.stamps.length)?'<span class="ok">✓</span>':'<span class="ng">△ 申請は8/16/24個</span>'}</div>
-      <div>容量：1個300KB以下 → 超えた場合は自動で減色・コマ数調整</div></div>
-      <div class="hint">ファイル名は 01.png〜 で出力（メイン・タブ画像は含みません）。</div>
+      <div>カラー：RGB(フルカラー)・背景透過・全フレーム同サイズ <span class="ok">✓</span></div>
+      <div>容量：1個1MB以下 → 超えた場合のみ自動で階調を間引き／コマ数調整</div></div>
+      <div class="hint">ZIPの中身：01.png〜（スタンプAPNG）＋ main.png（240×240 APNG）＋ tab.png（96×74 PNG）</div>
       <div class="row" style="margin-top:10px"><button class="btn pri" id="exp2">⬇ ZIPで書き出し</button></div>
       <div class="prog" id="prog"><i></i></div><div class="results" id="results"></div>`);
     document.getElementById('exp2').onclick=exportAll;
@@ -804,10 +767,10 @@ function tick(t){
   if(state.playing&&t-lastT>=interval){lastT=t;frameIdx++;if(frameIdx>=F){frameIdx=0;loopCount++}}else if(!state.playing&&!tick.dirty)return;
   tick.dirty=false;
   prefetchFonts();
-  const f=frameIdx;
-  state.stamps.forEach((st,i)=>{const c=cards[i];if(c)renderFrame(c.ctx,st.text,curSettings(i),f,F,st.seed)});
+  const [f,Fn]=seqIndex(Math.min(frameIdx,F-1),F);
+  state.stamps.forEach((st,i)=>{const c=cards[i];if(c)renderFrame(c.ctx,st.text,curSettings(i),f,Fn,st.seed)});
   const st=state.stamps[state.sel];const bctx=document.getElementById('big').getContext('2d');
-  if(st)renderFrame(bctx,st.text,curSettings(state.sel),f,F,st.seed);else bctx.clearRect(0,0,OUT.W,OUT.H);
+  if(st)renderFrame(bctx,st.text,curSettings(state.sel),f,Fn,st.seed);else bctx.clearRect(0,0,OUT.W,OUT.H);
 }
 
 /* =========================================================
@@ -819,20 +782,25 @@ async function exportAll(){
   if(!state.stamps.length){toast('文言を入力してください');return}
   exporting=true;state.tab='out';render_tabs();render_ctls();
   const prog=document.getElementById('prog'),bar=prog.querySelector('i'),res=document.getElementById('results');prog.style.display='block';res.innerHTML='';
-  const files=[];const n=state.stamps.length;
+  const files=[];const n=state.stamps.length,total=n+2;let warn=0;
+  const row=(name,label,blob,used,same)=>{const kb=(blob.size/1024).toFixed(1),ok=blob.size<=LIMIT&&!same;if(!ok)warn++;
+    const note=same?'（全フレーム同一：LINEでエラーになります。動きを入れてください）':used&&(used.F!==OUT.frames||used.q>1)?`（容量調整：${used.F}枚${used.q>1?'・階調間引き':''}）`:'';
+    res.insertAdjacentHTML('beforeend',`<div><span>${name}　${label}</span><span style="color:${ok?'var(--ok)':'var(--ng)'};font-weight:700">${kb}KB ${ok?'✓':'✕'}${note}</span></div>`)};
   for(let i=0;i<n;i++){
-    const {blob,used}=await buildStamp(i);
+    const {blob,used,same}=await buildStamp(i);
     const name=String(i+1).padStart(2,'0')+'.png';files.push({name,blob});
-    const kb=(blob.size/1024).toFixed(1),ok=blob.size<=300*1024;
-    const note=used.F!==OUT.frames||(OUT.mode==='rgba'&&used.mode==='pal')||used.q>1?`（自動最適化：${used.F}枚${used.mode==='pal'?'・256色':''}${used.q>1?'・減色':''}）`:'';
-    res.insertAdjacentHTML('beforeend',`<div><span>${name}　${state.stamps[i].text.replace(/\n/g,' ').replace(/[\[\]]/g,'').slice(0,12)}</span><span class="${ok?'ok':'ng'}" style="color:${ok?'var(--ok)':'var(--ng)'}">${kb}KB ${ok?'✓':'✕'}${note}</span></div>`);
-    if(cards[i])cards[i].el.querySelector('.sz').textContent=kb+'KB';
-    bar.style.width=((i+1)/n*100)+'%';
+    row(name,state.stamps[i].text.replace(/\n/g,' ').replace(/[\[\]]/g,'').slice(0,12),blob,used,same);
+    if(cards[i])cards[i].el.querySelector('.sz').textContent=(blob.size/1024).toFixed(0)+'KB';
+    bar.style.width=((i+1)/total*100)+'%';
   }
+  const mi=Math.min(OUT.mainIdx,n-1),ti=Math.min(OUT.tabIdx,n-1);
+  const mm=await buildStamp(mi,240,240);files.push({name:'main.png',blob:mm.blob});row('main.png','メイン 240×240 APNG',mm.blob,mm.used,mm.same);bar.style.width=((n+1)/total*100)+'%';
+  const tb=await buildTab(ti);files.push({name:'tab.png',blob:tb});row('tab.png','タブ 96×74 PNG',tb,null,false);bar.style.width='100%';
+  if(warn)toast('✕の項目があります。確認してください');
   const zip=await makeZip(files);download(zip,'line_anime_stamps.zip');toast('ZIPを書き出しました');exporting=false;
 }
 document.getElementById('btnExport').onclick=exportAll;
-document.getElementById('btnDlOne').onclick=async()=>{const i=state.sel;if(!state.stamps[i])return;toast('書き出し中…');const {blob}=await buildStamp(i);download(blob,String(i+1).padStart(2,'0')+'.png');toast((blob.size/1024).toFixed(1)+'KB で書き出しました')};
+document.getElementById('btnDlOne').onclick=async()=>{const i=state.sel;if(!state.stamps[i])return;toast('書き出し中…');const {blob,same}=await buildStamp(i);download(blob,String(i+1).padStart(2,'0')+'.png');toast(same?'全フレームが同じ画像です（LINEでエラーになります）':(blob.size/1024).toFixed(1)+'KB で書き出しました')};
 
 /* =========================================================
    起動
@@ -845,7 +813,7 @@ parseText();
 rebuildCanvases();render_tabs();render_ctls();render_target();
 document.fonts.ready.then(()=>{layoutCache.clear();metricCache.clear()});
 requestAnimationFrame(tick);
-window.__app={state,OUT,buildStamp,renderFrame,curSettings};
+window.__app={state,OUT,buildStamp,buildTab,renderFrame,curSettings,makeZip};
 </script>
 </body>
 </html>
