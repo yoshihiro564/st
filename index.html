@@ -165,15 +165,44 @@ const FONTS=[
  ['明朝・筆',[['Shippori Mincho B1',800,'しっぽり明朝'],['Noto Serif JP',900,'Noto明朝 極太'],['Zen Antique',400,'Zenアンチック'],['Yuji Syuku',400,'佑字 肅'],['Yuji Boku',400,'佑字 朴']]]
 ];
 const FONT_W={};FONTS.forEach(g=>g[1].forEach(f=>FONT_W[f[0]]=f[1]));
+// 漢字などが元フォントに無い時の代替(カテゴリ別に「太さ・雰囲気」が近いものへ)
+const CAT_FB={'ポップ・極太':'M PLUS Rounded 1c','ゴシック':'Noto Sans JP','かわいい・手書き':'Kiwi Maru','デザイン・装飾':'Noto Sans JP','明朝・筆':'Noto Serif JP'};
+const FONT_FB={};FONTS.forEach(g=>g[1].forEach(f=>FONT_FB[f[0]]=CAT_FB[g[0]]));
+Object.assign(FONT_FB,{'Noto Sans JP':'Zen Kaku Gothic New','M PLUS Rounded 1c':'Zen Maru Gothic','Zen Maru Gothic':'M PLUS Rounded 1c','Kosugi Maru':'Zen Maru Gothic','Kiwi Maru':'Zen Maru Gothic','Noto Serif JP':'Shippori Mincho B1'});
+let cssReady;
 (function(){const fam=[];FONTS.forEach(g=>g[1].forEach(f=>{fam.push('family='+f[0].replace(/ /g,'+')+(f[1]!==400?':wght@'+f[1]:''))}));
- document.getElementById('gf').href='https://fonts.googleapis.com/css2?'+fam.join('&')+'&display=swap';})();
+ const l=document.getElementById('gf');cssReady=new Promise(r=>{l.onload=l.onerror=()=>r();setTimeout(r,10000)});
+ l.href='https://fonts.googleapis.com/css2?'+fam.join('&')+'&display=swap';})();
 const fontStr=(s,px)=>`${FONT_W[s.font]||400} ${px}px "${s.font}","Hiragino Sans",sans-serif`;
-const loadedKeys=new Set();
+// 1文字ごとの字形判定：元フォントに無い文字だけ代替フォントで描く
+const loadedCh=new Set(),pendingCh=new Set(),covCache=new Map();
+const ccv=document.createElement('canvas');ccv.width=ccv.height=56;const cctx=ccv.getContext('2d',{willReadFrequently:true});
+function glyphSig(fontCss,ch){cctx.clearRect(0,0,56,56);cctx.font=fontCss;cctx.textBaseline='middle';cctx.fillStyle='#000';cctx.fillText(ch,4,28);
+  const d=cctx.getImageData(0,0,56,56).data;let h=0;for(let i=3;i<d.length;i+=4)h=(Math.imul(h,31)+d[i])|0;return h}
+function covers(font,ch){
+  const k=font+'|'+ch;if(covCache.has(k))return covCache.get(k);
+  if(!loadedCh.has(k))return true; // 未判定(読み込み中)
+  const w=FONT_W[font]||400;
+  const r=glyphSig(`${w} 44px "${font}",serif`,ch)!==glyphSig(`${w} 44px serif`,ch);
+  covCache.set(k,r);return r;
+}
+function glyphFont(s,ch,px){
+  if(covers(s.font,ch))return fontStr(s,px);
+  const fb=FONT_FB[s.font]||'Noto Sans JP';
+  return `${FONT_W[fb]||400} ${px}px "${fb}","Hiragino Sans",sans-serif`;
+}
 async function ensureFonts(list){ // list:[[font,text]]
+  await cssReady;
   const ps=[];
-  for(const [f,t] of list){const k=f+'|'+t;if(loadedKeys.has(k))continue;loadedKeys.add(k);
-    ps.push(document.fonts.load(`${FONT_W[f]||400} 40px "${f}"`,t||'あ').catch(()=>{}));}
-  if(ps.length){await Promise.all(ps);layoutCache.clear();metricCache.clear();}
+  for(const [f,t] of list){
+    const need=[...new Set(Array.from(t||'あ'))].filter(c=>c.trim()&&!loadedCh.has(f+'|'+c)&&!pendingCh.has(f+'|'+c));
+    if(!need.length)continue;
+    need.forEach(c=>pendingCh.add(f+'|'+c));
+    const fb=FONT_FB[f]||'Noto Sans JP',txt=need.join('');
+    ps.push(Promise.all([document.fonts.load(`${FONT_W[f]||400} 40px "${f}"`,txt).catch(()=>{}),document.fonts.load(`${FONT_W[fb]||400} 40px "${fb}"`,txt).catch(()=>{})])
+      .finally(()=>need.forEach(c=>{const k=f+'|'+c;pendingCh.delete(k);loadedCh.add(k);covCache.delete(k)})));
+  }
+  if(ps.length){await Promise.all(ps);layoutCache.clear();metricCache.clear();tick.dirty=true;}
 }
 
 /* =========================================================
@@ -258,7 +287,7 @@ function getLayout(text,s){
   const key=layoutKey(text,s);if(layoutCache.has(key))return layoutCache.get(key);
   const W=OUT.W,H=OUT.H,B=100;
   const lines=text.split('\n').map(parseLine);
-  const wOf=(ch,acc)=>{mctx.font=fontStr(s,B*(acc?s.accentScale:1));return mctx.measureText(ch).width};
+  const wOf=(ch,acc)=>{mctx.font=glyphFont(s,ch,B*(acc?s.accentScale:1));return mctx.measureText(ch).width};
   let groups=[],totalW=0,totalH=0;
   if(s.dir==='h'){
     for(const ln of lines){let w=0,mx=0;const gs=ln.map(c=>{const sz=B*(c.acc?s.accentScale:1);const a=(c.ch===' '?wOf(' ',c.acc):wOf(c.ch,c.acc))*s.spacing;w+=a;mx=Math.max(mx,sz);return{...c,sz,adv:a}});if(!mx)mx=B;groups.push({gs,len:w,th:mx});}
@@ -427,7 +456,7 @@ function drawPass(ctx,L,states,s,mode,camM,alphaMul=1,ox=0,oy=0){
     ctx.save();ctx.setTransform(camM);ctx.translate(ox+bx,oy+by);glyphTransform(ctx,g,st);
     ctx.globalAlpha=clamp(st.a*alphaMul*ba,0,1);
     if(st.blur>.6&&BLUR_OK)ctx.filter=`blur(${st.blur.toFixed(1)}px)`;
-    ctx.font=fontStr(s,g.size);ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.lineJoin='round';ctx.miterLimit=2;
+    ctx.font=glyphFont(s,g.ch,g.size);ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.lineJoin='round';ctx.miterLimit=2;
     const by0=L.base*g.size;
     if(mode==='outer'){ctx.strokeStyle=s.stroke;ctx.lineWidth=s.strokeW*2;
       if(s.glow>0){ctx.shadowColor=s.glowColor;ctx.shadowBlur=s.glow*(st.neon&&st.a<.5?.3:1)}
