@@ -208,11 +208,11 @@ async function ensureFonts(list){ // list:[[font,text]]
 /* =========================================================
    エフェクト定義
    ========================================================= */
-const ENT=[['none','なし'],['pop','ポンッ'],['elastic','ビヨーン'],['zoomIn','ズームイン'],['stamp','ドン(押印)'],['heavy','ズシン'],['drop','落下バウンド'],['rise','下から'],['slideL','左から'],['slideR','右から'],['spin','回転イン'],['flipX','横フリップ'],['flipY','縦フリップ'],['roll','くるっと手前'],['jellyIn','ぷるん'],['stretch','びよーん縦'],['swingIn','ぶら下がり'],['blurIn','ぼかしイン'],['fade','フェード'],['scatter','バラバラ集合'],['typewriter','タイプライター'],['glitchIn','グリッチ出現'],['waveIn','波打ち']];
-const LOOP=[['float','ふわふわ'],['wave','ウェーブ'],['jump','ぴょんぴょん'],['bounceSq','ぽよん'],['shake','ブルブル'],['jitter','ガタガタ'],['shiver','ぷるぷる震え'],['pulse','ドクン'],['breath','呼吸'],['swing','ゆらゆら'],['wobble','ぐにゃ'],['jelly','ゼリー'],['spin','回転'],['flipLoop','くるくる裏返し'],['orbit','くるくる円'],['rainbow','レインボー'],['flash','色フラッシュ'],['blink','点滅'],['neon','ネオン明滅'],['glitch','グリッチ'],['shine','光沢スイープ']];
-const CAM=[['none','なし'],['shake','画面ゆれ'],['impact','着地の衝撃'],['bounce','全体バウンド'],['swing','全体ゆらゆら'],['breath','ズーム呼吸'],['heart','全体ドクン'],['spin','全体回転'],['tilt','首かしげ']];
-const DECO=[['sparkle','キラキラ'],['star','星'],['heart','ハート'],['confetti','紙吹雪'],['note','音符'],['bubble','泡'],['snow','雪'],['burst','効果線パッ'],['sweat','汗'],['anger','怒りマーク'],['rays','後光'],['focus','集中線'],['shock','衝撃波'],['speed','スピード線'],['gaan','ガーン縦線']];
-const BACK_DECO=new Set(['rays','focus','shock','speed','gaan']);
+const ENT=[['none','なし'],['pop','ポンッ'],['elastic','ビヨーン'],['zoomIn','ズームイン'],['stamp','ドン(押印)'],['heavy','ズシン'],['drop','落下バウンド'],['rise','下から'],['slideL','左から'],['slideR','右から'],['spin','回転イン'],['flipX','横フリップ'],['flipY','縦フリップ'],['roll','くるっと手前'],['jellyIn','ぷるん'],['stretch','びよーん縦'],['swingIn','ぶら下がり'],['blurIn','ぼかしイン'],['fade','フェード'],['scatter','バラバラ集合'],['typewriter','タイプライター'],['glitchIn','グリッチ出現'],['waveIn','波打ち'],['slideU','上から'],['tornado','竜巻'],['boomerang','ブーメラン'],['unfold','パタッと開く'],['rubber','びよーん横'],['zoomOut','奥から'],['bounceIn','ぽよよん'],['skid','キキーッ'],['firework','打ち上げ'],['flicker','チカチカ点灯'],['pendulumX','ふりこ着地'],['jumpIn','ジャンプ登場'],['split','左右から集合'],['rainIn','上下から交互']];
+const LOOP=[['float','ふわふわ'],['wave','ウェーブ'],['jump','ぴょんぴょん'],['bounceSq','ぽよん'],['shake','ブルブル'],['jitter','ガタガタ'],['shiver','ぷるぷる震え'],['pulse','ドクン'],['breath','呼吸'],['swing','ゆらゆら'],['wobble','ぐにゃ'],['jelly','ゼリー'],['spin','回転'],['flipLoop','くるくる裏返し'],['orbit','くるくる円'],['rainbow','レインボー'],['flash','色フラッシュ'],['blink','点滅'],['neon','ネオン明滅'],['glitch','グリッチ'],['shine','光沢スイープ'],['rock','シーソー'],['zigzag','ジグザグ'],['tada','ジャーン'],['rubberBand','ゴムバンド'],['headShake','イヤイヤ'],['eight','8の字'],['pendulum','ふりこ'],['hop','順番ジャンプ'],['scaleWave','大小ウェーブ'],['fadeLoop','ふんわり明滅'],['highlight','順番に光る'],['quake','激震'],['pastel','パステル虹'],['chromaShift','色ずれ'],['blurPulse','ピンぼけ'],['retype','くり返しタイプ']];
+const CAM=[['none','なし'],['shake','画面ゆれ'],['impact','着地の衝撃'],['bounce','全体バウンド'],['swing','全体ゆらゆら'],['breath','ズーム呼吸'],['heart','全体ドクン'],['spin','全体回転'],['tilt','首かしげ'],['zoomSlow','じわズーム'],['punch','ズームパンチ'],['drift','ただよう'],['vibrate','細かい振動'],['orbit','ぐるぐる移動'],['jelly','全体ぷるん'],['pendulum','全体ふりこ'],['flip','全体裏返し']];
+const DECO=[['sparkle','キラキラ'],['star','星'],['heart','ハート'],['confetti','紙吹雪'],['note','音符'],['bubble','泡'],['snow','雪'],['burst','効果線パッ'],['sweat','汗'],['anger','怒りマーク'],['rays','後光'],['focus','集中線'],['shock','衝撃波'],['speed','スピード線'],['gaan','ガーン縦線'],['flower','花びら'],['rain','雨'],['zzz','Zzz(眠い)'],['question','はてな'],['exclaim','ビックリ'],['blush','ほっぺ照れ'],['moyamoya','もやもや'],['yen','コイン'],['ring','光の輪'],['lightning','稲妻'],['flame','メラメラ炎'],['spotlight','スポットライト'],['stripes','ストライプ背景'],['dots','水玉背景']];
+const BACK_DECO=new Set(['rays','focus','shock','speed','gaan','ring','lightning','flame','spotlight','stripes','dots']);
 
 const DEF={
  font:'Dela Gothic One',dir:'h',align:'center',sizeMul:1,spacing:1,lineGap:1.12,margin:10,accentScale:1.2,
@@ -239,6 +239,13 @@ const PRESETS=[
  ['昭和レトロ',{font:'Kaisei Decol',fill:'#ffe27a',grad:false,accent:'#ff5a36',stroke:'#2b1a10',strokeW:6,inStrokeW:0,extrude:7,extrudeColor:'#c2410c',shadow:false,ent:'spin',loops:['swing'],cam:'none',decos:['rays'],decoColor:'#ffb347'}],
  ['手書きゆる',{font:'Yomogi',fill:'#333333',grad:false,accent:'#ff4d6d',stroke:'#fff',strokeW:7,extrude:0,ent:'typewriter',entStagger:1,loops:['jitter'],cam:'none',decos:['note'],decoColor:'#ff7aa2'}],
  ['ドットゲーム',{font:'DotGothic16',fill:'#20e070',grad:false,accent:'#ff3cac',stroke:'#0b1a10',strokeW:6,inStrokeW:0,extrude:3,extrudeColor:'#0b5a2a',ent:'glitchIn',loops:['glitch'],cam:'none',decos:['star'],decoColor:'#ffe600'}],
+ ['おやすみ',{font:'Kiwi Maru',fill:'#4b5bd6',grad:true,fill2:'#8fa0ff',accent:'#ff7aa2',stroke:'#fff',strokeW:8,inStrokeW:0,extrude:0,ent:'fade',loops:['float','fadeLoop'],loopAmp:.7,cam:'drift',decos:['zzz'],decoColor:'#ffcc00'}],
+ ['はてな',{font:'M PLUS Rounded 1c',fill:'#2b2b2b',grad:false,accent:'#1e6bff',stroke:'#fff',strokeW:8,extrude:0,ent:'pendulumX',loops:['zigzag'],cam:'tilt',decos:['question'],lineColor:'#1e6bff'}],
+ ['ビックリ',{font:'Dela Gothic One',fill:'#ffe100',grad:true,fill2:'#ff8a00',accent:'#ff2a2a',stroke:'#1a1a1a',strokeW:7,inStrokeW:0,extrude:3,extrudeColor:'#1a1a1a',ent:'jumpIn',loops:['tada'],cam:'punch',decos:['exclaim','burst'],lineColor:'#1a1a1a'}],
+ ['感謝の花',{font:'Zen Maru Gothic',fill:'#ff6f91',grad:true,fill2:'#ffb37a',accent:'#7a3cff',stroke:'#fff',strokeW:9,extrude:0,ent:'unfold',loops:['hop'],cam:'none',decos:['flower','sparkle'],decoColor:'#ffcc00'}],
+ ['メラメラ',{font:'Reggae One',fill:'#ffffff',grad:false,accent:'#ffe100',stroke:'#c80000',strokeW:8,inStroke:'#3a0000',inStrokeW:2,extrude:2,extrudeColor:'#5a0000',ent:'rainIn',loops:['quake'],loopAmp:.5,cam:'vibrate',decos:['flame'],lineColor:'#222'}],
+ ['しょんぼり雨',{font:'Yomogi',fill:'#5b6b8a',grad:true,fill2:'#9aa8c4',accent:'#1e6bff',stroke:'#fff',strokeW:7,extrude:0,ent:'drop',loops:['shiver'],loopAmp:.5,cam:'none',decos:['rain','moyamoya'],lineColor:'#5b6b8a'}],
+ ['金運',{font:'Kaisei Decol',fill:'#ffd34d',grad:true,fill2:'#c98a00',accent:'#d0102a',stroke:'#5a3a00',strokeW:6,inStrokeW:0,extrude:4,extrudeColor:'#7a4a00',shadow:false,ent:'firework',loops:['shine'],cam:'zoomSlow',decos:['yen','sparkle'],decoColor:'#ffe680'}],
  ['筆文字 和',{font:'Yuji Syuku',fill:'#111111',grad:false,accent:'#d0102a',stroke:'#fff',strokeW:8,extrude:0,ent:'zoomIn',entStagger:.3,loops:['breath'],cam:'none',decos:['burst'],lineColor:'#d0102a'}],
 ];
 
@@ -378,6 +385,20 @@ function glyphState(g,L,s,f,F,seed){
       case'scatter':{const u=1-eOutCubic(e);st.x=r1*W*1.4*u;st.y=r2*H*1.4*u;st.rot=r1*6*u;st.a=Math.min(1,e*2);break}
       case'typewriter':st.a=tl>=delay?1:0;if(tl>=delay&&tl<delay+.06)st.sc=1.25;break;
       case'glitchIn':if(e<1){const k=hash(seed,g.i,f);st.a=k<e*1.2?1:0;st.x=(hash(seed,f,g.i,3)-.5)*30*(1-e);st.glitch=1-e}break;
+      case'slideU':st.y=-H*(1-eOutCubic(e));st.a=Math.min(1,e*3);break;
+      case'tornado':{const u=1-eOutCubic(e);st.rot=-TAU*2*u;st.x=Math.cos(u*TAU*2)*W*.35*u;st.y=Math.sin(u*TAU*2)*H*.35*u;st.sc=Math.max(.01,1-u);st.a=Math.min(1,e*3);break}
+      case'boomerang':st.x=W*.9*(1-eOutBack(e));st.rot=TAU*(1-eOutCubic(e));st.a=Math.min(1,e*4);break;
+      case'unfold':{const v=Math.max(.02,eOutBack(e));st.sy*=v;st.y=-sz*.45*(1-v);st.a=Math.min(1,e*4);break}
+      case'rubber':{const v=Math.max(.02,eOutElastic(e));st.sx*=v;st.sy*=clamp(1/Math.sqrt(v),.6,1.6);st.a=Math.min(1,e*5);break}
+      case'zoomOut':st.sc=Math.max(.01,eOutCubic(e));st.blur=(1-e)*8;st.a=e;break;
+      case'bounceIn':st.sc=Math.max(.01,eOutBounce(e));st.a=Math.min(1,e*5);break;
+      case'skid':st.x=W*(1-eOutCubic(e));st.skx=.55*Math.cos(e*Math.PI*1.5)*(1-e);break;
+      case'firework':{const u=Math.min(1,e/.6);st.y=H*.8*(1-eOutCubic(u));st.sc=e<.6?.35:.35+.65*eOutBack((e-.6)/.4);st.a=Math.min(1,e*4);break}
+      case'flicker':st.a=e>=1?1:(hash(seed,g.i,f,16)<e*.9?1:.08);break;
+      case'pendulumX':st.x=sz*1.6*(1-e)*Math.sin(e*Math.PI*5);st.a=Math.min(1,e*3);st.sc=.5+.5*eOutCubic(e);break;
+      case'jumpIn':st.y=H*.6*(1-e)-sz*1.3*Math.sin(Math.PI*e);st.a=Math.min(1,e*4);if(e>.85&&e<1){const q=Math.sin((e-.85)/.15*Math.PI);st.sy*=1-.15*q;st.sx*=1+.1*q}break;
+      case'split':st.x=(g.i%2?1:-1)*W*(1-eOutCubic(e));st.a=Math.min(1,e*3);break;
+      case'rainIn':st.y=(g.i%2?1:-1)*H*(1-eOutBack(e));st.a=Math.min(1,e*3);break;
       case'waveIn':st.y=sz*1.2*(1-e)*Math.cos(e*Math.PI*3);st.a=Math.min(1,e*3);st.sc=.4+.6*eOutCubic(e);break;
     }
   }
@@ -406,6 +427,22 @@ function glyphState(g,L,s,f,F,seed){
       case'flash':if(Math.sin(p)>.3)st.flash=true;break;
       case'blink':if(Math.sin(p)<-.5)st.a*=.12;break;
       case'neon':st.neon=1;if(hash(seed,fr,11)<.14*amp||(hash(seed,fr,g.i,12)<.06*amp))st.a*=.35;break;
+      case'rock':st.y+=sz*.08*amp*Math.sin(TAU*c*ph)*(g.i%2?1:-1);break;
+      case'zigzag':st.rot+=.16*amp*Math.sin(TAU*c*ph)*(g.i%2?1:-1);break;
+      case'tada':{const u=((c*ph-w*.3)%1+1)%1;if(u<.5){const q=u/.5;st.sc*=1+.12*amp*Math.sin(q*Math.PI);st.rot+=.12*amp*Math.sin(q*Math.PI*6)*Math.sin(q*Math.PI)}break}
+      case'rubberBand':{const u=((c*ph-w*.3)%1+1)%1;if(u<.6){const q=u/.6,d=Math.sin(q*Math.PI*3)*(1-q);st.sx*=1+.25*amp*d;st.sy*=1-.2*amp*d}break}
+      case'headShake':{const u=((c*ph)%1+1)%1;if(u<.5){const q=u/.5,d=Math.sin(q*TAU*2.5)*(1-q);st.x+=sz*.12*amp*d;st.rot+=.06*amp*d}break}
+      case'eight':st.x+=sz*.08*amp*Math.sin(p);st.y+=sz*.05*amp*Math.sin(2*p);break;
+      case'pendulum':if(!st.pivot)st.pivot=-sz*.6;st.rot+=.25*amp*Math.sin(p);break;
+      case'hop':{const k=((c*ph*n-g.i)%n+n)%n;if(k<1)st.y+=-sz*.3*amp*Math.sin(Math.PI*k);break}
+      case'scaleWave':st.sc*=1+.15*amp*Math.sin(p);break;
+      case'fadeLoop':st.a*=.55+.45*Math.cos(p);break;
+      case'highlight':{const k=Math.floor((((c*ph)%1+1)%1)*n);if(k===g.i){st.flash=true;st.sc*=1+.15*amp}break}
+      case'quake':st.x+=(hash(seed,g.i,fr,17)-.5)*sz*.14*amp;st.y+=(hash(seed,g.i,fr,18)-.5)*sz*.14*amp;st.rot+=(hash(seed,g.i,fr,19)-.5)*.3*amp;break;
+      case'pastel':st.hue=((c*ph-w*.5)*360%360+360)%360;st.pastel=true;break;
+      case'chromaShift':st.glitch=Math.max(st.glitch,.5+.3*amp*Math.sin(p));break;
+      case'blurPulse':st.blur=Math.max(st.blur,4*amp*(.5+.5*Math.sin(p)));break;
+      case'retype':{const u=((c*ph)%1+1)%1;if(g.i>=u*(n+3))st.a=0;break}
       case'glitch':if(hash(seed,fr,13)<.28*amp){st.glitch=Math.max(st.glitch,.8);st.x+=(hash(seed,fr,g.i,14)-.5)*sz*.25;st.skx+=(hash(seed,fr,15)-.5)*.4}break;
     }}
   }
@@ -417,7 +454,7 @@ function glyphState(g,L,s,f,F,seed){
    ========================================================= */
 function camMatrix(s,f,F,seed){
   const W=OUT.W,H=OUT.H,ph=f/F,tl=F>1?f/(F-1):1,a=s.camAmp;
-  let x=0,y=0,r=0,sc=1;
+  let x=0,y=0,r=0,sc=1,sx=1,sy=1,px=W/2,py=H/2;
   switch(s.cam){
     case'shake':x=(hash(seed,f,21)-.5)*10*a;y=(hash(seed,f,22)-.5)*10*a;break;
     case'impact':{const P=s.ent==='none'?.1:s.entPortion;const u=(tl-P*.95)/.25;if(u>0&&u<1){x=(hash(seed,f,23)-.5)*22*a*(1-u);y=(hash(seed,f,24)-.5)*22*a*(1-u)}break}
@@ -427,8 +464,16 @@ function camMatrix(s,f,F,seed){
     case'heart':sc=1+.1*a*beat(ph);break;
     case'spin':r=TAU*ph;break;
     case'tilt':r=.14*a*Math.tanh(4*Math.sin(TAU*ph));break;
+    case'zoomSlow':sc=1+.12*a*(.5-.5*Math.cos(TAU*ph));break;
+    case'punch':sc=1+.16*a*Math.exp(-((ph*2)%1)*7);break;
+    case'drift':x=8*a*Math.sin(TAU*ph);y=5*a*Math.sin(2*TAU*ph);break;
+    case'vibrate':x=(hash(seed,f,25)-.5)*4*a;y=(hash(seed,f,26)-.5)*4*a;break;
+    case'orbit':x=8*a*Math.cos(TAU*ph);y=8*a*Math.sin(TAU*ph);break;
+    case'jelly':{const v=Math.sin(TAU*ph*2);sx=1+.08*a*v;sy=1-.08*a*v;break}
+    case'pendulum':py=-H*.4;r=.1*a*Math.sin(TAU*ph);break;
+    case'flip':{const v=Math.cos(TAU*ph);sx=Math.abs(v)<.02?(v<0?-.02:.02):v;break}
   }
-  return new DOMMatrix().translate(W/2+x,H/2+y).rotate(r*180/Math.PI).scale(sc).translate(-W/2,-H/2);
+  return new DOMMatrix().translate(px+x,py+y).rotate(r*180/Math.PI).scale(sc*sx,sc*sy).translate(-px,-py);
 }
 
 /* =========================================================
@@ -443,7 +488,7 @@ function glyphTransform(ctx,g,st){
   if(g.rot)ctx.rotate(Math.PI/2);
 }
 function fillFor(ctx,g,st,s){
-  if(st.hue!=null)return `hsl(${st.hue},92%,${g.acc?45:55}%)`;
+  if(st.hue!=null)return st.pastel?`hsl(${st.hue},85%,${g.acc?66:76}%)`:`hsl(${st.hue},92%,${g.acc?45:55}%)`;
   if(st.flash)return g.acc?s.fill:s.accent;
   if(g.acc)return s.accent;
   if(s.grad){const h=g.size/2;const gr=s.gradDir==='v'?ctx.createLinearGradient(0,-h,0,h):ctx.createLinearGradient(-h,0,h,0);gr.addColorStop(0,s.fill);gr.addColorStop(1,s.fill2);return gr}
@@ -535,6 +580,20 @@ function drawDecos(c,back,s,L,f,F,seed){
       case'focus':{const N=Math.round(46*amt),R=Math.hypot(W,H)/2,fq=Math.floor(f/2);c.fillStyle=s.lineColor;for(let k=0;k<N;k++){const a=k/N*TAU+hash(seed,k,fq,58)*.12;const ri=R*(.62+hash(seed,k,fq,59)*.3);const wd=.012+hash(seed,k,60)*.02;c.beginPath();c.moveTo(W/2+Math.cos(a)*ri,H/2+Math.sin(a)*ri*.86);c.lineTo(W/2+Math.cos(a-wd)*R*1.3,H/2+Math.sin(a-wd)*R*1.3);c.lineTo(W/2+Math.cos(a+wd)*R*1.3,H/2+Math.sin(a+wd)*R*1.3);c.closePath();c.fill()}break}
       case'shock':{const R=Math.hypot(W,H)*.55;for(let k=0;k<2;k++){const u=(ph+k/2)%1;c.beginPath();c.ellipse(b.cx,b.cy,R*u*1.1,R*u*.8,0,0,TAU);c.globalAlpha=(1-u)*.9;c.strokeStyle=s.decoColor;c.lineWidth=10*(1-u)+1;c.stroke()}break}
       case'speed':{const N=Math.round(12*amt);c.lineCap='round';for(let k=0;k<N;k++){const u=(ph*2+hash(seed,k,61))%1;const y=H*(.06+.88*hash(seed,k,62));const len=30+hash(seed,k,63)*60;const x=W+len-u*(W+len*2);c.globalAlpha=.75;c.beginPath();c.moveTo(x,y);c.lineTo(x+len,y);c.strokeStyle=s.lineColor;c.lineWidth=1.5+hash(seed,k,64)*2.5;c.stroke()}break}
+      case'flower':{const N=Math.round(12*amt);for(let k=0;k<N;k++){const u=(ph+hash(seed,k,70))%1;const x=W*hash(seed,k,71)+Math.sin(TAU*(u+k*.2))*14;const y=-8+u*(H+16);c.save();c.translate(x,y);c.rotate(TAU*(u+hash(seed,k,72)));c.scale(1,.15+.85*Math.abs(Math.cos(TAU*(u*2+k*.3))));c.beginPath();c.ellipse(0,0,6.5,3.8,0,0,TAU);c.fillStyle=s.decoMulti?col(k):'#ffa8c0';c.fill();c.strokeStyle='rgba(255,255,255,.9)';c.lineWidth=1.2;c.stroke();c.restore()}break}
+      case'rain':{const N=Math.round(18*amt);c.lineCap='round';for(let k=0;k<N;k++){const u=(ph*2+hash(seed,k,73))%1;const x=W*hash(seed,k,74)+10-u*20;const y=-20+u*(H+40);c.beginPath();c.moveTo(x,y);c.lineTo(x-5,y+14);c.strokeStyle=hexA(s.decoMulti?col(k):'#5aa9ff',.85);c.lineWidth=2.2;c.stroke()}break}
+      case'zzz':{c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';const x0=Math.min(W-30,b.x1-2),y0=clamp(b.y0+10,40,H-10);for(let k=0;k<3;k++){const u=(ph*s.loopCycles+k/3)%1;const x=x0+u*16,y=y0-u*28;c.globalAlpha=Math.min(1,(1-u)*3,u*6);c.font=`900 ${12+u*12}px sans-serif`;c.strokeStyle='#fff';c.lineWidth=4;c.strokeText('Z',x,y);c.fillStyle=s.decoMulti?col(k):'#5b6bff';c.fillText('Z',x,y)}break}
+      case'question':{const x=Math.min(W-16,b.x1+6),y=Math.max(24,b.y0+8);const v=Math.sin(TAU*ph*2);c.translate(x,y-3*Math.abs(v));c.rotate(.25*v);c.font='900 30px sans-serif';c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';c.strokeStyle='#fff';c.lineWidth=6;c.strokeText('?',0,0);c.fillStyle=s.decoMulti?col(1):s.lineColor;c.fillText('?',0,0);break}
+      case'exclaim':{const x=Math.min(W-14,b.x1+4),y=Math.max(24,b.y0+8);const sc=1+.4*Math.exp(-((ph*2)%1)*6);c.translate(x,y);c.scale(sc,sc);c.rotate(.15);c.font='900 30px sans-serif';c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';c.strokeStyle='#fff';c.lineWidth=6;c.strokeText('!',0,0);c.fillStyle=s.decoMulti?col(2):'#ff2a2a';c.fillText('!',0,0);break}
+      case'blush':{const v=.7+.3*Math.sin(TAU*ph*2),y=Math.min(H-10,b.y1-2);for(const x of [b.x0+b.w*.15,b.x1-b.w*.15]){c.globalAlpha=.5*v;c.beginPath();c.ellipse(x,y,15,6.5,0,0,TAU);c.fillStyle='#ff8fb1';c.fill();c.globalAlpha=.95*v;c.strokeStyle='#ff4d7d';c.lineWidth=1.8;c.lineCap='round';for(let q=-1;q<=1;q++){c.beginPath();c.moveTo(x+q*6-3,y+3);c.lineTo(x+q*6+3,y-3);c.stroke()}}break}
+      case'moyamoya':{const x=Math.min(W-28,b.x1-6),y=Math.max(24,b.y0-2);c.lineCap='round';c.lineJoin='round';const path=()=>{c.beginPath();for(let t=0;t<=1.0001;t+=.02){const a=t*TAU*3+TAU*ph*2,rr=5+t*11+1.5*Math.sin(t*40+TAU*ph*4),px=x+Math.cos(a)*rr*1.3,py=y+Math.sin(a)*rr*.8;t?c.lineTo(px,py):c.moveTo(px,py)}};path();c.strokeStyle='#fff';c.lineWidth=5;c.stroke();path();c.strokeStyle=s.lineColor;c.lineWidth=2.2;c.stroke();break}
+      case'yen':{const N=Math.round(8*amt);c.textAlign='center';c.textBaseline='middle';c.font='900 14px sans-serif';for(let k=0;k<N;k++){const u=(ph+hash(seed,k,75))%1;const x=W*(.06+.88*hash(seed,k,76)),y=-12+u*(H+24);const sxv=Math.cos(TAU*(u*2+k*.3));c.save();c.translate(x,y);c.scale(Math.abs(sxv)<.06?.06:sxv,1);c.beginPath();c.arc(0,0,10,0,TAU);c.fillStyle='#ffc61a';c.fill();c.strokeStyle='#b07800';c.lineWidth=2;c.stroke();c.fillStyle='#8a5a00';c.fillText('¥',0,1);c.restore()}break}
+      case'ring':{for(let k=0;k<3;k++){const u=(ph+k/3)%1;c.beginPath();c.ellipse(b.cx,b.cy,(b.w/2+8)*(.9+u*.5),(b.h/2+8)*(.9+u*.5),0,0,TAU);c.globalAlpha=(1-u)*.8;c.strokeStyle=s.decoMulti?col(k):s.decoColor;c.lineWidth=3;c.stroke()}break}
+      case'lightning':{const fq=Math.floor(ph*8);if(hash(seed,fq,77)>=.55)break;c.lineJoin='miter';for(let k=0;k<2;k++){let x=W*(k?.84:.14)+(hash(seed,fq,k,78)-.5)*20,y=0,j=0;c.beginPath();c.moveTo(x,y);while(y<H*.75){j++;y+=14+hash(seed,fq,k,j,79)*14;x+=(hash(seed,fq,k,j,80)-.5)*28;c.lineTo(x,y)}c.strokeStyle='#fff';c.lineWidth=7;c.stroke();c.strokeStyle=s.decoColor;c.lineWidth=3.5;c.stroke()}break}
+      case'flame':{const N=Math.max(3,Math.round(9*amt));c.globalAlpha=.85;for(let k=0;k<N;k++){const x=W*(k+.5)/N,v=Math.sin(TAU*(ph*3+hash(seed,k,81)));const h=H*(.24+.08*v+.12*hash(seed,k,82)),w=W/N*.8;c.beginPath();c.moveTo(x-w,H);c.quadraticCurveTo(x-w*.9,H-h*.6,x+v*5,H-h);c.quadraticCurveTo(x+w*.9,H-h*.6,x+w,H);c.closePath();const gr=c.createLinearGradient(0,H,0,H-h);gr.addColorStop(0,'#ff3b00');gr.addColorStop(.6,'#ff9a1f');gr.addColorStop(1,'#ffe066');c.fillStyle=gr;c.fill()}break}
+      case'spotlight':{const x=W/2+Math.sin(TAU*ph)*W*.28,y=H/2+Math.sin(TAU*ph*2)*H*.12;const gr=c.createRadialGradient(x,y,0,x,y,Math.max(W,H)*.55);gr.addColorStop(0,hexA(s.decoColor,.6));gr.addColorStop(.5,hexA(s.decoColor,.18));gr.addColorStop(1,hexA(s.decoColor,0));c.fillStyle=gr;c.fillRect(0,0,W,H);break}
+      case'stripes':{const sp=28;c.fillStyle=hexA(s.decoColor,.3);c.translate(W/2,H/2);c.rotate(-Math.PI/4);const R=Math.hypot(W,H)/2+sp;for(let x=-R-sp+ph*sp;x<R;x+=sp)c.fillRect(x,-R,sp/2,R*2);break}
+      case'dots':{const sp=26,ox=ph*sp,oy=ph*sp*2;c.fillStyle=hexA(s.decoColor,.35);for(let r=-2;r*sp<H+sp;r++)for(let x=-sp;x<W+sp;x+=sp){c.beginPath();c.arc(x+(r&1?sp/2:0)+ox,r*sp+oy,5,0,TAU);c.fill()}break}
       case'gaan':{const N=Math.round(14*amt);c.globalAlpha=.7;for(let k=0;k<N;k++){const x=W*(k+.5)/N+(hash(seed,k,65)-.5)*6;const len=H*(.25+hash(seed,k,66)*.3)*(1+.06*Math.sin(TAU*(ph+k*.13)));c.beginPath();c.moveTo(x,0);c.lineTo(x,len);c.strokeStyle=s.lineColor;c.lineWidth=k%3?1.6:3;c.stroke()}break}
     }
     c.restore();
